@@ -32,12 +32,11 @@ class MainActivity : HotwireActivity() {
       ),
     )
 
-
     Hotwire.config.jsonConverter = KotlinXJsonConverter()
     Hotwire.registerBridgeComponents(
       BridgeComponentFactory("button", ::ButtonComponent),
       BridgeComponentFactory("back", ::BackComponent),
-    )
+      )
 
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
@@ -56,7 +55,7 @@ class MainActivity : HotwireActivity() {
   override fun navigatorConfigurations() = listOf(
     NavigatorConfiguration(
       name = "main",
-      startLocation = "http://10.0.2.2:5173",
+      startLocation = Settings.current.url,
       navigatorHostId = R.id.main_nav_host
     )
   )

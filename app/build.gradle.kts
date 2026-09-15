@@ -1,6 +1,7 @@
 plugins {
   alias(libs.plugins.android.application)
-  id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0" apply false
+  alias(libs.plugins.kotlin.serialization)
+  alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -13,12 +14,23 @@ android {
     applicationId = "com.matthewblott.jimlog"
     minSdk = 28
     targetSdk = 37
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = 3
+    versionName = "3"
   }
-
+  buildFeatures {
+    compose = true
+  }
   buildTypes {
     release {
+      isMinifyEnabled = true
+      isShrinkResources = true
+      proguardFiles(
+        getDefaultProguardFile("proguard-android-optimize.txt"),
+        "proguard-rules.pro"
+      )
+      ndk {
+        debugSymbolLevel = "FULL"
+      }
       optimization {
         enable = false
       }
@@ -40,4 +52,11 @@ dependencies {
   implementation("dev.hotwire:navigation-fragments:1.3.1")
   implementation("com.github.joemasilotti:bridge-components:0.14.0")
   implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+
+  implementation(platform("androidx.compose:compose-bom:2026.06.00"))
+
+  implementation("androidx.compose.material3:material3")
+  implementation("androidx.compose.ui:ui")
+  implementation("androidx.compose.ui:ui-tooling-preview")
+  implementation("androidx.compose.runtime:runtime")
 }

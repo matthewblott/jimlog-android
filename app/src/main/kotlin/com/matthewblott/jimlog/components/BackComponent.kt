@@ -1,42 +1,111 @@
 package com.matthewblott.jimlog.components
-import dev.hotwire.core.bridge.BridgeDelegate
 
 import android.util.Log
+import android.view.Gravity
+import android.view.ViewGroup
+import androidx.appcompat.widget.Toolbar
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.masilotti.bridgecomponents.R
+import com.masilotti.bridgecomponents.shared.Colors
 import dev.hotwire.core.bridge.BridgeComponent
+import dev.hotwire.core.bridge.BridgeDelegate
 import dev.hotwire.core.bridge.Message
 import dev.hotwire.navigation.destinations.HotwireDestination
+import dev.hotwire.navigation.fragments.HotwireFragment
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 class BackComponent(
   name: String,
-  private val delegate: BridgeDelegate<HotwireDestination>
-) : BridgeComponent<HotwireDestination>(name, delegate) {
+  private val bridgeDelegate: BridgeDelegate<HotwireDestination>
+) : BridgeComponent<HotwireDestination>(name, bridgeDelegate) {
+  private val leftButtonId = 2
+  private val fragment: HotwireFragment
+    get() = bridgeDelegate.destination.fragment as HotwireFragment
 
   override fun onReceive(message: Message) {
-    // Handle incoming messages based on the message `event`.
     when (message.event) {
-      "connect" -> handleConnectEvent(message)
+      "left" ->
+      addButton(message, Gravity.START, leftButtonId)
+      "disconnect" -> removeButton()
       else -> Log.w("ButtonComponent", "Unknown event for message: $message")
     }
   }
 
-  private fun handleConnectEvent(message: Message) {
+  private fun addButton(message: Message, gravity: Int, viewId: Int) {
+    removeButton()
+
     val data = message.data<MessageData>() ?: return
+    val toolbar = fragment.toolbarForNavigation() ?: return
+    val composeView = ComposeView(fragment.requireContext()).apply {
+      id = viewId
+      setContent {
+        ToolbarButton(
+          title = data.title,
+          imageName = data.imageName,
+          contentColor = Colors.bridgeworkColor("button", hex = data.colorCode),
+          onClick = { replyTo(message.event) })
+      }
+    }
+    val layoutParams = Toolbar.LayoutParams(
+      ViewGroup.LayoutParams.WRAP_CONTENT,
+      ViewGroup.LayoutParams.WRAP_CONTENT
+    ).apply { this.gravity = gravity }
 
-    // Write native code to display a native submit button in the
-    // toolbar displayed in the delegate.destination. Use the
-    // incoming data.title to set the button title.
+    toolbar.addView(composeView, layoutParams)
   }
 
-  private fun performButtonClick(): Boolean {
-    return replyTo("connect")
+  private fun removeButton() {
+    val toolbar = fragment.toolbarForNavigation()
+    val button = toolbar?.findViewById<ComposeView>(leftButtonId)
+    toolbar?.removeView(button)
   }
 
-  // Use kotlinx.serialization annotations to define a serializable
-  // data class that represents the incoming message.data json.
   @Serializable
   data class MessageData(
-    @SerialName("title") val title: String
+    val title: String,
+    @SerialName("androidImage") val imageName: String?,
+    @SerialName("color") val colorCode: String?
   )
+}
+
+@Composable
+private fun ToolbarButton(
+  title: String,
+  imageName: String?,
+  contentColor: Color,
+  onClick: () -> Unit
+) {
+  Button(
+    onClick = onClick,
+    colors = ButtonDefaults.buttonColors(
+      containerColor = Color.Transparent,
+      contentColor = contentColor
+    )
+  )
+  {
+    imageName?.let {
+      Text(
+        text = it,
+        fontFamily = FontFamily(Font(R.font.material_symbols)),
+        fontSize = 28.sp,
+        style = TextStyle(fontFeatureSettings = "liga")
+      )
+    }
+      ?: Text(title)
+  }
 }
