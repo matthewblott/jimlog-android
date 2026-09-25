@@ -5,7 +5,7 @@ object Settings {
 
   enum class Environment(val url: String) {
     Remote("https://jimlog.coderscoffeehouse.com"),
-    Local("http://10.0.2.2:5173")
+    Local("http://10.0.2.2:3000")
   }
 
 }
